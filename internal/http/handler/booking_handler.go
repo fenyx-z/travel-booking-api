@@ -25,13 +25,13 @@ func (h *BookingHandler) Create(c echo.Context) error {
 
 	// 1. Bind JSON request body ke DTO
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse("Format request tidak valid"))
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Format request tidak valid"))
 	}
 
 	// 2. Eksekusi Business Logic melalui Service
 	booking, err := h.bookingService.CreateBooking(req)
 	if err != nil {
-		return c.JSON(http.StatusConflict, response.ErrorResponse(err.Error()))
+		return c.JSON(http.StatusConflict, response.ErrorResponse(http.StatusConflict, err.Error()))
 	}
 
 	// 3. Kembalikan Response Sukses
