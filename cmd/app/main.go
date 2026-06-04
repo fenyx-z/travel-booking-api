@@ -1,40 +1,67 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"travel-backend/config"
-	"travel-backend/pkg/database"
+	"log"
+	"os"
+	"os/signal"
+	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"travel-backend/config"
+	"travel-backend/internal/builder"
+	"travel-backend/internal/server"
+	"travel-backend/pkg/database"
 )
 
 func main() {
-	// 1. Load Configuration
-	cfg := config.LoadConfig()
+	cfg, err := config.NewConfig(".env")
+	checkError(err)
 
-	// 2. Initialize Database
-	_ = database.InitPostgres(cfg.DBUrl) // Sementara assign ke blank identifier (_) sebelum di-pass ke repo
+	db, err := database.InitDatabase(cfg.DBUrl)
+	checkError(err)
 
-	// 3. Initialize Echo
-	e := echo.New()
+	publicRoutes := builder.BuildPublicRoutes(cfg, db)
+	privateRoutes := builder.BuildPrivateRoutes(cfg, db)
 
-	// Middleware bawaan
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	srv := server.NewServer(cfg, publicRoutes, privateRoutes)
+	
+	fmt.Printf("🚀 Server is running on port %s\n", cfg.AppPort)
+	runServer(srv, cfg.AppPort)
+	waitForShutdown(srv)
+}
 
-	// Test Route
-	e.GET("/ping", func(c echo.Context) error {
-		return c.JSON(200, map[string]string{
-			"message": "pong",
-		})
-	})
+func waitForShutdown(srv *server.Server) {
+	quit := make(chan os.Signal, 1)
 
-	// 4. Start Server
-	port := fmt.Sprintf(":%s", cfg.AppPort)
-	if cfg.AppPort == "" {
-		port = ":8080"
+	signal.Notify(quit, os.Interrupt)
+
+	<-quit
+	fmt.Println("\nMematikan server secara perlahan (Graceful Shutdown)...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	go func() {
+		if err := srv.Shutdown(ctx); err != nil {
+			srv.Logger.Fatal(err)
+		}
+	}()
+	
+	fmt.Println("Server berhasil dimatikan")
+}
+
+func runServer(srv *server.Server, port string) {
+	go func() {
+		err := srv.Start(fmt.Sprintf(":%s", port))
+		if err != nil && err.Error() != "http: Server closed" {
+			log.Fatal(err)
+		}
+	}()
+}
+
+func checkError(err error) {
+	if err != nil {
+		panic(err)
 	}
-	e.Logger.Fatal(e.Start(port))
 }
