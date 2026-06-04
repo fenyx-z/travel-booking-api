@@ -10,7 +10,7 @@ import (
 
 	"travel-backend/config"
 	"travel-backend/internal/builder"
-	"travel-backend/internal/server"
+	"travel-backend/pkg/server"
 	"travel-backend/pkg/database"
 )
 
