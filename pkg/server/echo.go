@@ -1,7 +1,10 @@
 package server
 
 import (
+	"log"
+
 	"travel-backend/config"
+	"travel-backend/pkg/route"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -9,23 +12,47 @@ import (
 
 type Server struct {
 	*echo.Echo
+	Logger echo.Logger
 }
 
-type RouteFunc func(e *echo.Echo)
-
-func NewServer(cfg *config.Config, publicRoutes RouteFunc, privateRoutes RouteFunc) *Server {
+func NewServer(cfg *config.Config, publicRoutes []route.Route, privateRoutes []route.Route) *Server {
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogMethod:   true,
+		LogURI:      true,
+		LogStatus:   true,
+		LogLatency:  true,
+		LogRemoteIP: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			log.Printf("[ECHO] %15s | %3d | %10v | %-7s %s\n",
+				v.RemoteIP,
+				v.Status,
+				v.Latency,
+				v.Method,
+				v.URI,
+			)
+			return nil
+		},
+	}))
+
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	if publicRoutes != nil {
-		publicRoutes(e)
-	}
-	if privateRoutes != nil {
-		privateRoutes(e)
+	api := e.Group("/api/v1")
+
+	// Daftarkan semua rute publik (termasuk /bookings)
+	for _, route := range publicRoutes {
+		api.Add(route.Method, route.Path, route.Handler)
 	}
 
-	return &Server{e}
+	// Daftarkan rute privat (tanpa middleware auth untuk mode simulator)
+	for _, route := range privateRoutes {
+		api.Add(route.Method, route.Path, route.Handler)
+	}
+
+	return &Server{
+		Echo:   e,
+		Logger: e.Logger,
+	}
 }

@@ -1,14 +1,25 @@
 package router
 
 import (
-	"travel-backend/internal/http/handler"
+	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"travel-backend/internal/http/handler"
+	"travel-backend/pkg/route"
 )
 
-func SetupRoutes(e *echo.Echo, bookingHandler *handler.BookingHandler) {
-	api := e.Group("/api/v1")
+func PublicRoutes(bookingHandler *handler.BookingHandler) []route.Route {
+	return []route.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/bookings",
+			Handler: bookingHandler.Create,
+			Roles:   []string{}, // Kosongkan karena tidak ada pengecekan role
+		},
+		// Endpoint lain untuk kebutuhan simulator bisa ditambahkan di sini
+	}
+}
 
-	bookings := api.Group("/bookings")
-	bookings.POST("", bookingHandler.Create)
+func PrivateRoutes() []route.Route {
+	// Dibiarkan kosong karena simulator tidak memakai auth
+	return []route.Route{}
 }
