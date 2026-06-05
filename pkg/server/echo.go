@@ -41,12 +41,10 @@ func NewServer(cfg *config.Config, publicRoutes []route.Route, privateRoutes []r
 
 	api := e.Group("/api/v1")
 
-	// Daftarkan semua rute publik (termasuk /bookings)
 	for _, route := range publicRoutes {
 		api.Add(route.Method, route.Path, route.Handler)
 	}
 
-	// Daftarkan rute privat (tanpa middleware auth untuk mode simulator)
 	for _, route := range privateRoutes {
 		api.Add(route.Method, route.Path, route.Handler)
 	}

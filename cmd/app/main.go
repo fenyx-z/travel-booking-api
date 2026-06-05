@@ -34,7 +34,6 @@ func main() {
 func waitForShutdown(srv *server.Server) {
 	quit := make(chan os.Signal, 1)
 
-	// Menerima sinyal interrupt dari OS (Ctrl+C atau SIGTERM)
 	signal.Notify(quit, os.Interrupt)
 
 	<-quit
