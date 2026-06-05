@@ -8,6 +8,7 @@ import (
 type Config struct {
 	AppPort string
 	DBUrl   string
+	JWTSecret string
 }
 
 func NewConfig(filepath string) (*Config, error) {
@@ -19,5 +20,6 @@ func NewConfig(filepath string) (*Config, error) {
 	return &Config{
 		AppPort: os.Getenv("APP_PORT"),
 		DBUrl:   os.Getenv("DB_URL"),
+		JWTSecret: os.Getenv("JWT_SECRET"),
 	}, nil
 }
