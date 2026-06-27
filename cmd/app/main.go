@@ -18,13 +18,12 @@ func main() {
 	cfg, err := config.NewConfig(".env")
 	checkError(err)
 
-	db, err := database.InitDatabase(cfg.DBUrl)
+	db, err := database.InitDatabase(cfg.DBUrl, cfg.DBMaxOpenConns, cfg.DBMaxIdleConns, cfg.DBConnMaxLifetime, cfg.DBConnMaxIdleTime)
 	checkError(err)
 
 	publicRoutes := builder.BuildPublicRoutes(cfg, db)
-	privateRoutes := builder.BuildPrivateRoutes(cfg, db)
 
-	srv := server.NewServer(cfg, publicRoutes, privateRoutes)
+	srv := server.NewServer(cfg, publicRoutes)
 	
 	fmt.Printf("🚀 Server is running on port %s\n", cfg.AppPort)
 	runServer(srv, cfg.AppPort)

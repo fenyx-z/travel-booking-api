@@ -15,7 +15,7 @@ type Server struct {
 	Logger echo.Logger
 }
 
-func NewServer(cfg *config.Config, publicRoutes []route.Route, privateRoutes []route.Route) *Server {
+func NewServer(cfg *config.Config, publicRoutes []route.Route) *Server {
 	e := echo.New()
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -25,12 +25,13 @@ func NewServer(cfg *config.Config, publicRoutes []route.Route, privateRoutes []r
 		LogLatency:  true,
 		LogRemoteIP: true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			log.Printf("[ECHO] %15s | %3d | %10v | %-7s %s\n",
+			log.Printf("[ECHO] %15s | %3d | %10v | %-7s %s | %s\n",
 				v.RemoteIP,
 				v.Status,
 				v.Latency,
 				v.Method,
 				v.URI,
+				v.Error,
 			)
 			return nil
 		},
@@ -42,10 +43,6 @@ func NewServer(cfg *config.Config, publicRoutes []route.Route, privateRoutes []r
 	api := e.Group("/api/v1")
 
 	for _, route := range publicRoutes {
-		api.Add(route.Method, route.Path, route.Handler)
-	}
-
-	for _, route := range privateRoutes {
 		api.Add(route.Method, route.Path, route.Handler)
 	}
 

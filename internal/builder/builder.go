@@ -12,16 +12,14 @@ import (
 )
 
 func BuildPublicRoutes(cfg *config.Config, db *gorm.DB) []route.Route {
-	// Inisialisasi komponen untuk Booking
-	scheduleRepo := repository.NewScheduleRepository(db)
-	bookingRepo := repository.NewBookingRepository(db)
+	// Inisialisasi komponen untuk Pemesanan
+	jadwalRepo := repository.NewJadwalRepository(db)
+	pemesananRepo := repository.NewPemesananRepository(db)
+	kursiRepo := repository.NewKursiRepository(db)
 	
-	bookingService := service.NewBookingService(db, scheduleRepo, bookingRepo)
-	bookingHandler := handler.NewBookingHandler(bookingService)
+	pemesananService := service.NewPemesananService(db, jadwalRepo, pemesananRepo, kursiRepo)
+	pemesananHandler := handler.NewPemesananHandler(pemesananService)
 
-	return router.PublicRoutes(bookingHandler)
-}
-
-func BuildPrivateRoutes(cfg *config.Config, db *gorm.DB) []route.Route {
-	return router.PrivateRoutes()
+	seedHandler := handler.NewSeedHandler(db)
+	return router.PublicRoutes(pemesananHandler, seedHandler)
 }

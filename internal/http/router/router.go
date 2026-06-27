@@ -7,19 +7,31 @@ import (
 	"travel-backend/pkg/route"
 )
 
-func PublicRoutes(bookingHandler *handler.BookingHandler) []route.Route {
+func PublicRoutes(pemesananHandler *handler.PemesananHandler, seedHandler *handler.SeedHandler) []route.Route {
 	return []route.Route{
+		// Skenario A: Tanpa Kontrol Konkurensi (Lost Update)
 		{
 			Method:  http.MethodPost,
-			Path:    "/bookings",
-			Handler: bookingHandler.Create,
-			Roles:   []string{}, // Kosongkan karena tidak ada pengecekan role
+			Path:    "/bookings/none",
+			Handler: pemesananHandler.CreateNoControl,
 		},
-		// Endpoint lain untuk kebutuhan simulator bisa ditambahkan di sini
+		// Skenario B: Pessimistic Concurrency Control (PCC)
+		{
+			Method:  http.MethodPost,
+			Path:    "/bookings/pcc",
+			Handler: pemesananHandler.CreatePCC,
+		},
+		// Skenario C: Optimistic Concurrency Control (OCC)
+		{
+			Method:  http.MethodPost,
+			Path:    "/bookings/occ",
+			Handler: pemesananHandler.CreateOCC,
+		},
+		// Endpoint untuk mereset/seeding tabel database dari Load Tester
+		{
+			Method:  http.MethodDelete,
+			Path:    "/seed",
+			Handler: seedHandler.ResetDatabase,
+		},
 	}
-}
-
-func PrivateRoutes() []route.Route {
-	// Dibiarkan kosong karena simulator tidak memakai auth
-	return []route.Route{}
 }
